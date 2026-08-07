@@ -11,7 +11,7 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - ./volumes/data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     networks:
       - postgres-network
     healthcheck:
@@ -24,3 +24,6 @@ services:
 networks:
   postgres-network:
     driver: bridge
+
+volumes:
+  postgres-data:

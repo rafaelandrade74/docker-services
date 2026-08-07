@@ -60,7 +60,16 @@ docker compose exec -T postgres psql -U $POSTGRES_USER -d $POSTGRES_DB < backups
 
 ## Persistência dos dados
 
-Os dados do PostgreSQL são armazenados em `volumes/data/` no host. A pasta é mapeada para `/var/lib/postgresql/data` dentro do container. Remover o container não apaga os dados.
+Os dados do PostgreSQL são armazenados no volume nomeado `postgres-data`, gerenciado pelo Docker. Remover o container não apaga os dados.
+
+> **Nota:** não é utilizado bind mount (`./volumes/data`) para o diretório de dados do Postgres porque, no Windows, o NTFS não preserva as permissões Unix (`0700`) exigidas pelo `initdb`, o que impede a inicialização do banco. Um volume nomeado é gerenciado dentro do filesystem Linux da engine do Docker e não sofre esse problema.
+
+Para inspecionar ou remover o volume:
+
+```bash
+docker volume ls
+docker volume rm postgres_postgres-data
+```
 
 ## Portas
 
@@ -75,7 +84,7 @@ postgres/
 ├── docker-compose.yml   # Definição do serviço
 ├── .env.example         # Exemplo de variáveis de ambiente
 ├── README.md            # Esta documentação
-├── volumes/
-│   └── data/            # Dados persistentes do PostgreSQL (gerado em runtime)
 └── backups/             # Dumps do banco de dados
 ```
+
+Os dados persistentes ficam no volume nomeado `postgres-data` (fora da árvore de pastas do projeto).
