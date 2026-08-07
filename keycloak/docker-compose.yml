@@ -1,0 +1,42 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: keycloak
+    restart: unless-stopped
+    command: start
+    environment:
+      TZ: ${TZ:-America/Sao_Paulo}
+
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+
+      KC_DB: postgres
+      KC_DB_URL_HOST: ${KC_DB_URL_HOST}
+      KC_DB_URL_PORT: ${KC_DB_URL_PORT:-5432}
+      KC_DB_URL_DATABASE: ${KC_DB_URL_DATABASE}
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+
+      KC_HOSTNAME: ${KC_HOSTNAME}
+      KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT:-false}
+      KC_HTTP_ENABLED: ${KC_HTTP_ENABLED:-true}
+      KC_PROXY_HEADERS: ${KC_PROXY_HEADERS:-xforwarded}
+
+      KC_HEALTH_ENABLED: "true"
+      KC_LOG_LEVEL: ${KC_LOG_LEVEL:-info}
+    ports:
+      - "${KC_HTTP_PORT:-8080}:8080"
+    volumes:
+      - ./themes:/opt/keycloak/themes/custom
+    networks:
+      - keycloak-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"status\": \"UP\"' <&3"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  keycloak-network:
+    driver: bridge
