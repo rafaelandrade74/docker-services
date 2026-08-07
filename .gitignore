@@ -1,0 +1,12 @@
+# Variáveis de ambiente (nunca versionar credenciais reais)
+.env
+.env.*
+!.env.example
+
+# Volumes e dados persistentes
+volumes/
+backups/
+
+# Sistema
+.DS_Store
+Thumbs.db
