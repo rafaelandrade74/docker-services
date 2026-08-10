@@ -1,0 +1,37 @@
+services:
+  vault:
+    image: hashicorp/vault:1.17
+    container_name: vault
+    restart: unless-stopped
+    ports:
+      - "${VAULT_PORT:-8200}:8200"
+    environment:
+      VAULT_ADDR: "http://0.0.0.0:8200"
+      VAULT_LOG_LEVEL: "${VAULT_LOG_LEVEL:-info}"
+    volumes:
+      - ./config/vault.hcl:/vault/config/vault.hcl:ro
+      - ./policies:/vault/policies:ro
+      - vault-data:/vault/data
+      - vault-logs:/vault/logs
+    cap_add:
+      - IPC_LOCK
+    command: server
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8200/v1/sys/health?standbyok=true"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - vault-network
+
+volumes:
+  vault-data:
+    name: vault-data
+  vault-logs:
+    name: vault-logs
+
+networks:
+  vault-network:
+    name: vault-network
+    driver: bridge
