@@ -157,7 +157,15 @@ docker exec -it vault vault list auth/userpass/users
 docker exec -it vault vault token revoke -self
 ```
 
-Após essa etapa, utilize exclusivamente o usuário administrador para operações do dia a dia.
+Após essa etapa, utilize o usuário administrador para todas as operações, incluindo configuração de AppRole, novas políticas e outros métodos de autenticação. O login é feito via CLI ou interface Web:
+
+```bash
+docker exec -it vault vault login -method=userpass \
+  username="$VAULT_ADMIN_USERNAME" \
+  password='<sua-senha>'
+```
+
+> O Root Token só é necessário novamente em casos excepcionais (ex: recuperação de acesso total). Nesse caso, gere um novo a partir das Unseal Keys com `vault operator generate-root`.
 
 ---
 
