@@ -15,10 +15,6 @@ vault/
 │   └── api-read-policy.hcl    # Política de leitura para aplicações via AppRole
 ├── scripts/
 │   └── entrypoint.sh          # Corrige permissões dos volumes e inicia o Vault
-├── examples/
-│   └── csharp/
-│       ├── VaultService.cs    # Serviço de leitura de segredos via AppRole
-│       └── Program.cs         # Exemplo de uso
 ├── volumes/               # Diretório local (referência; dados em volumes nomeados)
 ├── .env.example           # Variáveis de ambiente de referência
 ├── docker-compose.yml
@@ -222,40 +218,6 @@ docker exec -it vault vault kv put secret/minha-app chave=valor outro=exemplo
 docker exec -it vault vault write auth/approle/login \
   role_id=<role-id> \
   secret_id=<secret-id>
-```
-
----
-
-## Exemplo C# — Leitura de Segredos via AppRole
-
-Instale o pacote NuGet:
-
-```bash
-dotnet add package VaultSharp
-```
-
-Configure as variáveis de ambiente da aplicação:
-
-```env
-VAULT_ADDR=http://localhost:8200
-VAULT_ROLE_ID=<role-id obtido no passo 4>
-VAULT_SECRET_ID=<secret-id obtido no passo 5>
-```
-
-Os arquivos de exemplo estão em [`examples/csharp/`](examples/csharp/):
-
-- **`VaultService.cs`** — serviço que autentica via AppRole e lê segredos
-- **`Program.cs`** — exemplo de uso
-
-```csharp
-var vault = new VaultService(
-    vaultAddress: Environment.GetEnvironmentVariable("VAULT_ADDR"),
-    roleId:       Environment.GetEnvironmentVariable("VAULT_ROLE_ID"),
-    secretId:     Environment.GetEnvironmentVariable("VAULT_SECRET_ID")
-);
-
-var data = await vault.ReadSecretAsync("minha-app");
-// data["chave"] == "valor"
 ```
 
 ---
