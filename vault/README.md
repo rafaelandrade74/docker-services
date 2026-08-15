@@ -12,6 +12,8 @@ vault/
 │   └── vault.hcl          # Configuração principal do Vault
 ├── policies/
 │   └── admin-policy.hcl   # Política administrativa de exemplo
+├── scripts/
+│   └── entrypoint.sh      # Corrige permissões dos volumes e inicia o Vault
 ├── volumes/               # Diretório local (referência; dados em volumes nomeados)
 ├── .env.example           # Variáveis de ambiente de referência
 ├── docker-compose.yml
@@ -127,11 +129,11 @@ docker exec -it vault vault policy read admin-policy
 
 ### 7. Criar o usuário administrador
 
-Substitua os valores abaixo pelos definidos no seu `.env`:
+Os valores são lidos diretamente do `.env`:
 
 ```bash
-docker exec -it vault vault write auth/userpass/users/admin \
-  password=TroqueEstaSenha \
+source .env && docker exec -it vault vault write auth/userpass/users/$VAULT_ADMIN_USERNAME \
+  password="$VAULT_ADMIN_PASSWORD" \
   policies=admin-policy
 ```
 
@@ -199,9 +201,9 @@ O usuário administrador criado com a política `admin-policy` possui acesso com
 ### Utilizando o usuário administrador
 
 ```bash
-docker exec -it vault vault login -method=userpass \
-  username=admin \
-  password=TroqueEstaSenha
+source .env && docker exec -it vault vault login -method=userpass \
+  username="$VAULT_ADMIN_USERNAME" \
+  password="$VAULT_ADMIN_PASSWORD"
 ```
 
 ### Verificar o token ativo
