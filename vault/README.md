@@ -9,11 +9,16 @@ Serviço de gerenciamento de segredos utilizando [HashiCorp Vault](https://www.v
 ```
 vault/
 ├── config/
-│   └── vault.hcl          # Configuração principal do Vault
+│   └── vault.hcl              # Configuração principal do Vault
 ├── policies/
-│   └── admin-policy.hcl   # Política administrativa de exemplo
+│   ├── admin-policy.hcl       # Política administrativa (acesso total)
+│   └── api-read-policy.hcl    # Política de leitura para aplicações via AppRole
 ├── scripts/
-│   └── entrypoint.sh      # Corrige permissões dos volumes e inicia o Vault
+│   └── entrypoint.sh          # Corrige permissões dos volumes e inicia o Vault
+├── examples/
+│   └── csharp/
+│       ├── VaultService.cs    # Serviço de leitura de segredos via AppRole
+│       └── Program.cs         # Exemplo de uso
 ├── volumes/               # Diretório local (referência; dados em volumes nomeados)
 ├── .env.example           # Variáveis de ambiente de referência
 ├── docker-compose.yml
@@ -157,6 +162,101 @@ docker exec -it vault vault token revoke -self
 ```
 
 Após essa etapa, utilize exclusivamente o usuário administrador para operações do dia a dia.
+
+---
+
+## Configuração AppRole para Aplicações
+
+O AppRole permite que aplicações se autentiquem no Vault usando um `role-id` e um `secret-id`, sem precisar de credenciais humanas.
+
+### 1. Habilitar o método AppRole
+
+```bash
+docker exec -it vault vault auth enable approle
+```
+
+### 2. Criar a política de leitura
+
+```bash
+docker exec -it vault vault policy write api-read /vault/policies/api-read-policy.hcl
+```
+
+### 3. Criar a role vinculada à política
+
+```bash
+docker exec -it vault vault write auth/approle/role/api-read \
+  token_policies=api-read \
+  token_ttl=1h \
+  token_max_ttl=4h \
+  secret_id_ttl=0
+```
+
+> `secret_id_ttl=0` significa que o Secret ID não expira. Ajuste conforme sua política de segurança.
+
+### 4. Obter o Role ID
+
+```bash
+docker exec -it vault vault read auth/approle/role/api-read/role-id
+```
+
+Guarde o valor de `role_id`.
+
+### 5. Gerar o Secret ID
+
+```bash
+docker exec -it vault vault write -f auth/approle/role/api-read/secret-id
+```
+
+Guarde o valor de `secret_id`.
+
+### 6. Criar um segredo de exemplo para testar
+
+```bash
+docker exec -it vault vault secrets enable -path=secret kv-v2
+docker exec -it vault vault kv put secret/minha-app chave=valor outro=exemplo
+```
+
+### 7. Testar o login via AppRole
+
+```bash
+docker exec -it vault vault write auth/approle/login \
+  role_id=<role-id> \
+  secret_id=<secret-id>
+```
+
+---
+
+## Exemplo C# — Leitura de Segredos via AppRole
+
+Instale o pacote NuGet:
+
+```bash
+dotnet add package VaultSharp
+```
+
+Configure as variáveis de ambiente da aplicação:
+
+```env
+VAULT_ADDR=http://localhost:8200
+VAULT_ROLE_ID=<role-id obtido no passo 4>
+VAULT_SECRET_ID=<secret-id obtido no passo 5>
+```
+
+Os arquivos de exemplo estão em [`examples/csharp/`](examples/csharp/):
+
+- **`VaultService.cs`** — serviço que autentica via AppRole e lê segredos
+- **`Program.cs`** — exemplo de uso
+
+```csharp
+var vault = new VaultService(
+    vaultAddress: Environment.GetEnvironmentVariable("VAULT_ADDR"),
+    roleId:       Environment.GetEnvironmentVariable("VAULT_ROLE_ID"),
+    secretId:     Environment.GetEnvironmentVariable("VAULT_SECRET_ID")
+);
+
+var data = await vault.ReadSecretAsync("minha-app");
+// data["chave"] == "valor"
+```
 
 ---
 
