@@ -137,6 +137,13 @@ source vault/.env && docker exec -it vault vault write auth/userpass/users/$VAUL
   policies=admin-policy
 ```
 
+> **Atenção:** Se a senha contiver caracteres especiais do shell (`$`, `` ` ``, `!`, `\`), execute o comando diretamente dentro do container usando **aspas simples** para evitar expansão incorreta:
+>
+> ```bash
+> docker exec -it vault sh
+> vault write auth/userpass/users/admin password='SuaSenha$Aqui' policies=admin-policy
+> ```
+
 ### 8. Verificar o usuário criado
 
 ```bash
