@@ -129,10 +129,10 @@ docker exec -it vault vault policy read admin-policy
 
 ### 7. Criar o usuário administrador
 
-Os valores são lidos diretamente do `.env`:
+Execute **no host** (não dentro do container). O `source .env` carrega as variáveis antes de passar o comando ao container:
 
 ```bash
-source .env && docker exec -it vault vault write auth/userpass/users/$VAULT_ADMIN_USERNAME \
+source vault/.env && docker exec -it vault vault write auth/userpass/users/$VAULT_ADMIN_USERNAME \
   password="$VAULT_ADMIN_PASSWORD" \
   policies=admin-policy
 ```
@@ -201,7 +201,7 @@ O usuário administrador criado com a política `admin-policy` possui acesso com
 ### Utilizando o usuário administrador
 
 ```bash
-source .env && docker exec -it vault vault login -method=userpass \
+source vault/.env && docker exec -it vault vault login -method=userpass \
   username="$VAULT_ADMIN_USERNAME" \
   password="$VAULT_ADMIN_PASSWORD"
 ```
